@@ -14,12 +14,12 @@ static void initialise_ui(void) {
   font_s = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   font_b = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   
-  general_info = text_layer_create(GRect(0, 0, 144, 60));
+  general_info = text_layer_create(GRect(0, 0, 144, 80));
   text_layer_set_text_alignment(general_info, GTextAlignmentCenter);
   text_layer_set_font(general_info, font_s);
   layer_add_child(window_get_root_layer(s_window), (Layer *)general_info);
   
-  accel_info = text_layer_create(GRect(0, 57, 144, 112));
+  accel_info = text_layer_create(GRect(0, 80, 144, 92));
   text_layer_set_text_alignment(accel_info, GTextAlignmentCenter);
   text_layer_set_font(accel_info, font_b);
   layer_add_child(window_get_root_layer(s_window), (Layer *)accel_info);
@@ -50,13 +50,38 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   vibes_long_pulse();
 }
 
+static AccelSamplingRate sampling_rate = ACCEL_SAMPLING_25HZ;
+static char * sampling_rate_str() {
+  static char str[5] = "100Hz";
+  snprintf(str, 5, "%dHz", sampling_rate);
+  return str;
+}
+static int num_samples = 25;
+
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  if (num_samples < 25) {
+    num_samples++;
+  } else {
+    num_samples = 0;
+  }
+  accel_service_set_samples_per_update(num_samples);
+}
+
+static void down_long_click_handler_down(ClickRecognizerRef recognizer, void *context) {
+  switch(sampling_rate) {
+    case ACCEL_SAMPLING_10HZ:  sampling_rate = ACCEL_SAMPLING_25HZ ; break;
+    case ACCEL_SAMPLING_25HZ:  sampling_rate = ACCEL_SAMPLING_50HZ ; break;
+    case ACCEL_SAMPLING_50HZ:  sampling_rate = ACCEL_SAMPLING_100HZ; break;
+    case ACCEL_SAMPLING_100HZ: sampling_rate = ACCEL_SAMPLING_10HZ ; break;
+  }
+  accel_service_set_sampling_rate(sampling_rate);
 }
 
 static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  window_long_click_subscribe(BUTTON_ID_DOWN, 500, down_long_click_handler_down, NULL);
 }
   
 void tap_service(AccelAxisType axis, int32_t direction) {
@@ -89,14 +114,16 @@ void accel_service(AccelData *data, uint32_t num_samples) {
       samples++;
     }
   }
-  x = x/samples;
-  y = y/samples;
-  z = z/samples;
+  if (samples > 0) {
+    x = x/samples;
+    y = y/samples;
+    z = z/samples;
+  }
   
   static char label1[128];
   static char label2[128];
-  snprintf(label1, 128, "Time / Period:\n%lu / %d\nSamples: %d/%d", (unsigned long)data[0].timestamp, (int16_t)period, samples, (int)num_samples);
-  snprintf(label2, 128, "X: %i\nY: %i\nZ: %i", (int16_t)x, (int16_t)y, (int16_t)z);
+  snprintf(label1, 128, "Time/Period:\n%lu/%dms\nSamples: %d/%d\nSampl. rate: %s", (unsigned long)data[0].timestamp, (int16_t)period, samples, (int)num_samples, sampling_rate_str());
+  snprintf(label2, 128, "X: %i mG\nY: %i mG\nZ: %i mG", (int16_t)x, (int16_t)y, (int16_t)z);
   text_layer_set_text(general_info, label1);
   text_layer_set_text(accel_info, label2);
   
