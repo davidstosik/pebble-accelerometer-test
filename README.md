@@ -6,7 +6,10 @@ App displays:
  - timestamp of last acceleration data sample
  - period over which sample was collected
  - number of samples kept / total samples for current display (a sample is kept only if watch did not vibrate)
- - acceleration on 3 axis X,Y, Z.
+ - current sample rate
+ - acceleration on 3 axis X,Y, Z
+
+You can observe that `period == 1000 * total_samples / sample_rate`.
 
 Buttons:
 
