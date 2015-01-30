@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "david.stosik+pebble@gmail.com",
+    "longName": "Accelerometer",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "Accelerometer",
+    "uuid": "5a75548f-d6f0-497f-96f7-da1bf613a06f",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
